@@ -1,0 +1,27 @@
+{
+  "targets": [],
+  "targetFiles": [],
+  "schedule": {
+    "fullScan": "0 */6 * * *",
+    "quickScan": "0 * * * *",
+    "dorkScan": "0 0 * * *",
+    "cveScan": "*/30 * * * *"
+  },
+  "options": {
+    "proxy": true,
+    "deep": false,
+    "safe": true,
+    "ai": "",
+    "timeout": 10000,
+    "threads": 10,
+    "notifications": {
+      "telegram": { "enabled": false, "botToken": "", "chatId": "" },
+      "discord": { "enabled": false, "webhookUrl": "" },
+      "onSeverity": ["critical", "high"]
+    }
+  },
+  "dorking": {
+    "tlds": ["go.id", "ac.id", "co.id"],
+    "categories": ["sql_errors", "admin_panels", "sensitive_files", "exposed_data"]
+  }
+}

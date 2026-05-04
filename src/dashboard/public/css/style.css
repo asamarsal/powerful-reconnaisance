@@ -1,0 +1,130 @@
+/* ReconTool Dashboard - Additional Styles */
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scanLine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0f3460;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e94560;
+}
+
+/* Table Responsive */
+@media (max-width: 768px) {
+  .findings-table {
+    font-size: 12px;
+  }
+
+  .findings-table th,
+  .findings-table td {
+    padding: 6px 8px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .sidebar {
+    width: 60px !important;
+  }
+
+  .sidebar .nav-text {
+    display: none;
+  }
+
+  .main-content {
+    margin-left: 60px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .sidebar, .header, footer {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* Tooltip */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f3460;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #16213e 25%, #1a1a3e 50%, #16213e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

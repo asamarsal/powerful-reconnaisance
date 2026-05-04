@@ -1,0 +1,43 @@
+{
+  "name": "recon-tool",
+  "version": "1.0.0",
+  "description": "Powerful Node.js Bug Bounty Toolkit with Live CVE Integration",
+  "main": "src/cli/index.js",
+  "bin": {
+    "recon-tool": "./src/cli/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "node src/cli/index.js",
+    "api": "node src/api/server.js",
+    "dev": "nodemon src/cli/index.js",
+    "test": "node --test tests/"
+  },
+  "keywords": [
+    "bug-bounty",
+    "security",
+    "reconnaissance",
+    "vulnerability-scanner",
+    "cve"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.0",
+    "chalk": "^5.3.0",
+    "cheerio": "^1.0.0",
+    "commander": "^12.1.0",
+    "cors": "^2.8.6",
+    "dns2": "^2.1.0",
+    "dotenv": "^16.4.0",
+    "express": "^4.22.1",
+    "inquirer": "^9.2.0",
+    "ora": "^8.0.0",
+    "p-limit": "^5.0.0",
+    "puppeteer": "^22.0.0",
+    "semver": "^7.6.0",
+    "socket.io": "^4.8.3",
+    "table": "^6.8.0",
+    "tldts": "^6.1.0",
+    "yaml": "^2.4.0"
+  }
+}

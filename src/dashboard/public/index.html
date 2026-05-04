@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReconTool Dashboard - Bug Bounty Scanner</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       ReconTool Dashboard - Dark Hacker Theme
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-card: #16213e;
+      --accent: #0f3460;
+      --highlight: #e94560;
+      --text-primary: #eaeaea;
+      --text-secondary: #a0a0b0;
+      --text-muted: #6c6c80;
+      --success: #00d4aa;
+      --warning: #ffb347;
+      --danger: #e94560;
+      --info: #4fc3f7;
+      --critical-bg: rgba(233, 69, 96, 0.15);
+      --high-bg: rgba(255, 152, 0, 0.15);
+      --medium-bg: rgba(255, 179, 71, 0.15);
+      --low-bg: rgba(0, 212, 170, 0.15);
+      --border: rgba(255, 255, 255, 0.05);
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────────────── */
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--highlight), #ff6b8a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--highlight), #ff6b8a);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .status-indicator.online {
+      background: rgba(0, 212, 170, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(0, 212, 170, 0.3);
+    }
+
+    .status-indicator.scanning {
+      background: rgba(79, 195, 247, 0.1);
+      color: var(--info);
+      border: 1px solid rgba(79, 195, 247, 0.3);
+    }
+
+    .status-indicator.offline {
+      background: rgba(233, 69, 96, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.online { background: var(--success); }
+    .status-dot.scanning { background: var(--info); }
+    .status-dot.offline { background: var(--danger); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-btn {
+      background: var(--accent);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .header-btn:hover {
+      background: var(--highlight);
+      border-color: var(--highlight);
+    }
+
+    /* ─── Sidebar ────────────────────────────────────────────────────── */
+
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      bottom: 0;
+      width: 220px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      z-index: 900;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+      font-size: 14px;
+    }
+
+    .nav-item:hover {
+      background: rgba(233, 69, 96, 0.05);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: rgba(233, 69, 96, 0.1);
+      color: var(--highlight);
+      border-left-color: var(--highlight);
+    }
+
+    .nav-icon {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+    }
+
+    .nav-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 24px;
+    }
+
+    /* ─── Main Content ───────────────────────────────────────────────── */
+
+    .main-content {
+      margin-left: 220px;
+      margin-top: 60px;
+      padding: 24px;
+      min-height: calc(100vh - 60px);
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: var(--text-primary);
+    }
+
+    /* ─── Stats Cards ────────────────────────────────────────────────── */
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .stat-card.critical::before { background: var(--danger); }
+    .stat-card.high::before { background: #ff9800; }
+    .stat-card.medium::before { background: var(--warning); }
+    .stat-card.low::before { background: var(--success); }
+    .stat-card.info::before { background: var(--info); }
+    .stat-card.total::before { background: linear-gradient(90deg, var(--highlight), var(--info)); }
+
+    .stat-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-card.critical .stat-value { color: var(--danger); }
+    .stat-card.high .stat-value { color: #ff9800; }
+    .stat-card.medium .stat-value { color: var(--warning); }
+    .stat-card.low .stat-value { color: var(--success); }
+
+    .stat-icon {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 28px;
+      opacity: 0.3;
+    }
+
+    /* ─── Scan Progress ──────────────────────────────────────────────── */
+
+    .scan-progress-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .scan-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .scan-progress-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .scan-progress-status {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-container {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--highlight), #ff6b8a);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+      position: relative;
+    }
+
+    .progress-bar.scanning::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: scanLine 1.5s infinite;
+    }
+
+    /* ─── Tables ─────────────────────────────────────────────────────── */
+
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .findings-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .findings-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .findings-table td {
+      padding: 12px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .findings-table tr:hover td {
+      background: rgba(233, 69, 96, 0.03);
+    }
+
+    .findings-table tr {
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    /* ─── Severity Badges ────────────────────────────────────────────── */
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-critical {
+      background: var(--critical-bg);
+      color: var(--danger);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+    }
+
+    .badge-high {
+      background: var(--high-bg);
+      color: #ff9800;
+      border: 1px solid rgba(255, 152, 0, 0.3);
+    }
+
+    .badge-medium {
+      background: var(--medium-bg);
+      color: var(--warning);
+      border: 1px solid rgba(255, 179, 71, 0.3);
+    }
+
+    .badge-low {
+      background: var(--low-bg);
+      color: var(--success);
+      border: 1px solid rgba(0, 212, 170, 0.3);
+    }
+
+    .badge-info {
+      background: rgba(79, 195, 247, 0.1);
+      color: var(--info);
+      border: 1px solid rgba(79, 195, 247, 0.3);
+    }
+
+    /* ─── Buttons ────────────────────────────────────────────────────── */
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--highlight);
+      color: white;
+      border-color: var(--highlight);
+    }
+
+    .btn-primary:hover {
+      background: #d63851;
+      box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: #1a4a8a;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border-color: rgba(233, 69, 96, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: var(--critical-bg);
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    /* ─── Forms ──────────────────────────────────────────────────────── */
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--highlight);
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    /* ─── Modal ──────────────────────────────────────────────────────── */
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--highlight);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* ─── Finding Detail ─────────────────────────────────────────────── */
+
+    .finding-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .finding-field {
+      padding: 12px;
+      background: var(--bg-primary);
+      border-radius: 8px;
+    }
+
+    .finding-field-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .finding-field-value {
+      font-size: 14px;
+      color: var(--text-primary);
+      word-break: break-all;
+    }
+
+    .poc-block {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      color: var(--success);
+      white-space: pre-wrap;
+      word-break: break-all;
+      overflow-x: auto;
+    }
+
+    /* ─── Target Cards ───────────────────────────────────────────────── */
+
+    .targets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .target-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: transform 0.2s;
+    }
+
+    .target-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .target-url {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--info);
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    .target-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .target-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ─── Chart Placeholder ──────────────────────────────────────────── */
+
+    .chart-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .chart-area {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      padding: 20px 0;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: linear-gradient(to top, var(--highlight), rgba(233, 69, 96, 0.3));
+      border-radius: 3px 3px 0 0;
+      min-height: 4px;
+      transition: height 0.5s ease;
+      position: relative;
+    }
+
+    .chart-bar:hover {
+      opacity: 0.8;
+    }
+
+    /* ─── Settings ───────────────────────────────────────────────────── */
+
+    .settings-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .settings-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--bg-primary);
+      border-radius: 12px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    .toggle.active {
+      background: var(--highlight);
+      border-color: var(--highlight);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle.active::after {
+      transform: translateX(20px);
+    }
+
+    /* ─── Footer ─────────────────────────────────────────────────────── */
+
+    .footer {
+      margin-left: 220px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ─── Notifications Toast ────────────────────────────────────────── */
+
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      min-width: 300px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast.critical { border-left: 3px solid var(--danger); }
+    .toast.high { border-left: 3px solid #ff9800; }
+    .toast.success { border-left: 3px solid var(--success); }
+
+    /* ─── Scan History ───────────────────────────────────────────────── */
+
+    .scan-history-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .scan-type-badge {
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: var(--info);
+    }
+
+    /* ─── Empty State ────────────────────────────────────────────────── */
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .empty-state-sub {
+      font-size: 13px;
+    }
+
+    /* ─── Proxy Status ───────────────────────────────────────────────── */
+
+    .proxy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .proxy-item {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    .proxy-item.active {
+      border-color: rgba(0, 212, 170, 0.3);
+    }
+
+    .proxy-item.inactive {
+      border-color: rgba(233, 69, 96, 0.3);
+      opacity: 0.6;
+    }
+
+    /* ─── Filters ────────────────────────────────────────────────────── */
+
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-chip {
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-chip:hover, .filter-chip.active {
+      background: var(--highlight);
+      color: white;
+      border-color: var(--highlight);
+    }
+
+    .search-input {
+      padding: 8px 14px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-primary);
+      font-size: 13px;
+      width: 250px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--highlight);
+    }
+
+    /* ─── Pagination ─────────────────────────────────────────────────── */
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+    }
+
+    .pagination-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .pagination-btn:hover, .pagination-btn.active {
+      background: var(--highlight);
+      color: white;
+      border-color: var(--highlight);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ Header ═══ -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-icon">&#x1F50D;</div>
+      <span class="logo">ReconTool Dashboard</span>
+    </div>
+    <div class="header-right">
+      <div class="status-indicator online" id="statusIndicator">
+        <span class="status-dot online" id="statusDot"></span>
+        <span id="statusText">Online</span>
+      </div>
+      <button class="header-btn" onclick="startQuickScan()">&#9889; Quick Scan</button>
+    </div>
+  </header>
+
+  <!-- ═══ Sidebar ═══ -->
+  <nav class="sidebar">
+    <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+      <span class="nav-icon">&#x1F4CA;</span>
+      <span class="nav-text">Dashboard</span>
+    </div>
+    <div class="nav-item" data-page="targets" onclick="navigateTo('targets')">
+      <span class="nav-icon">&#x1F3AF;</span>
+      <span class="nav-text">Targets</span>
+    </div>
+    <div class="nav-item" data-page="findings" onclick="navigateTo('findings')">
+      <span class="nav-icon">&#x1F41B;</span>
+      <span class="nav-text">Findings</span>
+    </div>
+    <div class="nav-item" data-page="scans" onclick="navigateTo('scans')">
+      <span class="nav-icon">&#x1F504;</span>
+      <span class="nav-text">Scans</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" data-page="proxy" onclick="navigateTo('proxy')">
+      <span class="nav-icon">&#x1F310;</span>
+      <span class="nav-text">Proxy Pool</span>
+    </div>
+    <div class="nav-item" data-page="settings" onclick="navigateTo('settings')">
+      <span class="nav-icon">&#x2699;</span>
+      <span class="nav-text">Settings</span>
+    </div>
+  </nav>
+
+  <!-- ═══ Main Content ═══ -->
+  <main class="main-content">
+
+    <!-- Dashboard Page -->
+    <div class="page active" id="page-dashboard">
+      <h1 class="page-title">Dashboard Overview</h1>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card total">
+          <div class="stat-label">Total Scans</div>
+          <div class="stat-value" id="stat-scans">0</div>
+          <div class="stat-icon">&#x1F504;</div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-label">Total Findings</div>
+          <div class="stat-value" id="stat-findings">0</div>
+          <div class="stat-icon">&#x1F41B;</div>
+        </div>
+        <div class="stat-card critical">
+          <div class="stat-label">Critical</div>
+          <div class="stat-value" id="stat-critical">0</div>
+          <div class="stat-icon">&#x1F6A8;</div>
+        </div>
+        <div class="stat-card high">
+          <div class="stat-label">High</div>
+          <div class="stat-value" id="stat-high">0</div>
+          <div class="stat-icon">&#x26A0;</div>
+        </div>
+        <div class="stat-card medium">
+          <div class="stat-label">Medium</div>
+          <div class="stat-value" id="stat-medium">0</div>
+          <div class="stat-icon">&#x1F536;</div>
+        </div>
+        <div class="stat-card low">
+          <div class="stat-label">Low</div>
+          <div class="stat-value" id="stat-low">0</div>
+          <div class="stat-icon">&#x1F535;</div>
+        </div>
+      </div>
+
+      <!-- Scan Progress -->
+      <div class="scan-progress-container">
+        <div class="scan-progress-header">
+          <span class="scan-progress-title" id="scan-progress-title">No Active Scan</span>
+          <span class="scan-progress-status" id="scan-progress-status">Idle</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="scan-progress-bar" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-container">
+        <div class="chart-title">Findings Over Time (Last 30 Days)</div>
+        <div class="chart-area" id="chart-area">
+          <!-- Bars will be generated dynamically -->
+        </div>
+      </div>
+
+      <!-- Recent Findings Table -->
+      <div class="table-container">
+        <div class="table-header">
+          <span class="table-title">Recent Findings</span>
+          <button class="btn btn-secondary btn-sm" onclick="navigateTo('findings')">View All</button>
+        </div>
+        <table class="findings-table">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>Type</th>
+              <th>URL</th>
+              <th>Parameter</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="recent-findings-body">
+            <tr>
+              <td colspan="5" class="empty-state">
+                <div class="empty-state-text">No findings yet</div>
+                <div class="empty-state-sub">Start a scan to discover vulnerabilities</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Targets Page -->
+    <div class="page" id="page-targets">
+      <h1 class="page-title">Targets</h1>
+
+      <div style="margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-end;">
+        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+          <label class="form-label">Target URL</label>
+          <input type="text" class="form-input" id="new-target-url" placeholder="https://example.com">
+        </div>
+        <div class="form-group" style="width: 200px; margin-bottom: 0;">
+          <label class="form-label">Name (optional)</label>
+          <input type="text" class="form-input" id="new-target-name" placeholder="Target name">
+        </div>
+        <button class="btn btn-primary" onclick="addTarget()">+ Add Target</button>
+      </div>
+
+      <div class="targets-grid" id="targets-grid">
+        <div class="empty-state">
+          <div class="empty-state-icon">&#x1F3AF;</div>
+          <div class="empty-state-text">No targets configured</div>
+          <div class="empty-state-sub">Add a target URL above to get started</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Findings Page -->
+    <div class="page" id="page-findings">
+      <h1 class="page-title">All Findings</h1>
+
+      <div class="filters-bar">
+        <input type="text" class="search-input" id="findings-search" placeholder="Search findings..." oninput="filterFindings()">
+        <button class="filter-chip active" data-severity="all" onclick="setSeverityFilter('all', this)">All</button>
+        <button class="filter-chip" data-severity="critical" onclick="setSeverityFilter('critical', this)">Critical</button>
+        <button class="filter-chip" data-severity="high" onclick="setSeverityFilter('high', this)">High</button>
+        <button class="filter-chip" data-severity="medium" onclick="setSeverityFilter('medium', this)">Medium</button>
+        <button class="filter-chip" data-severity="low" onclick="setSeverityFilter('low', this)">Low</button>
+      </div>
+
+      <div class="table-container">
+        <table class="findings-table">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>Type</th>
+              <th>URL</th>
+              <th>Parameter</th>
+              <th>Scan Type</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="all-findings-body">
+            <tr>
+              <td colspan="6" class="empty-state">
+                <div class="empty-state-text">No findings</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="findings-pagination"></div>
+    </div>
+
+    <!-- Scans Page -->
+    <div class="page" id="page-scans">
+      <h1 class="page-title">Scan History</h1>
+
+      <div style="margin-bottom: 20px; display: flex; gap: 12px;">
+        <button class="btn btn-primary" onclick="startScan('fullScan')">&#x1F50D; Full Scan</button>
+        <button class="btn btn-secondary" onclick="startScan('quickScan')">&#9889; Quick Scan</button>
+        <button class="btn btn-secondary" onclick="startScan('dorkScan')">&#x1F310; Dork Scan</button>
+        <button class="btn btn-secondary" onclick="startScan('cveScan')">&#x1F6E1; CVE Scan</button>
+      </div>
+
+      <div class="table-container">
+        <div class="table-header">
+          <span class="table-title">Scan History</span>
+        </div>
+        <div id="scan-history-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">&#x1F504;</div>
+            <div class="empty-state-text">No scan history</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proxy Page -->
+    <div class="page" id="page-proxy">
+      <h1 class="page-title">Proxy Pool</h1>
+
+      <div style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center;">
+        <button class="btn btn-primary" onclick="refreshProxies()">&#x1F504; Refresh Proxies</button>
+        <span id="proxy-stats" style="color: var(--text-muted); font-size: 13px;">Loading...</span>
+      </div>
+
+      <div class="proxy-grid" id="proxy-grid">
+        <div class="empty-state">
+          <div class="empty-state-icon">&#x1F310;</div>
+          <div class="empty-state-text">No proxies loaded</div>
+          <div class="empty-state-sub">Click refresh to load proxy pool</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Page -->
+    <div class="page" id="page-settings">
+      <h1 class="page-title">Settings</h1>
+
+      <div class="settings-section">
+        <div class="settings-title">Scan Configuration</div>
+        <div class="settings-row">
+          <div>
+            <div style="font-size: 14px;">Use Proxy</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Route scans through proxy pool</div>
+          </div>
+          <div class="toggle active" id="toggle-proxy" onclick="toggleSetting('proxy', this)"></div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div style="font-size: 14px;">Deep Scan</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Enable deep crawling and parameter discovery</div>
+          </div>
+          <div class="toggle" id="toggle-deep" onclick="toggleSetting('deep', this)"></div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div style="font-size: 14px;">Safe Mode</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Avoid destructive payloads</div>
+          </div>
+          <div class="toggle active" id="toggle-safe" onclick="toggleSetting('safe', this)"></div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">Notifications</div>
+        <div class="form-group">
+          <label class="form-label">Telegram Bot Token</label>
+          <input type="text" class="form-input" id="setting-telegram-token" placeholder="Enter bot token">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telegram Chat ID</label>
+          <input type="text" class="form-input" id="setting-telegram-chat" placeholder="Enter chat ID">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Discord Webhook URL</label>
+          <input type="text" class="form-input" id="setting-discord-webhook" placeholder="Enter webhook URL">
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">Schedule</div>
+        <div class="form-group">
+          <label class="form-label">Full Scan (cron)</label>
+          <input type="text" class="form-input" id="setting-schedule-full" value="0 */6 * * *">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quick Scan (cron)</label>
+          <input type="text" class="form-input" id="setting-schedule-quick" value="0 * * * *">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dork Scan (cron)</label>
+          <input type="text" class="form-input" id="setting-schedule-dork" value="0 0 * * *">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CVE Scan (cron)</label>
+          <input type="text" class="form-input" id="setting-schedule-cve" value="*/30 * * * *">
+        </div>
+        <button class="btn btn-primary" onclick="saveSchedule()">Update Schedule</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="footer">
+    <span>ReconTool v1.0.0 | Bug Bounty Automation Framework</span>
+    <span id="uptime-display">Uptime: --</span>
+  </footer>
+
+  <!-- ═══ Modal ═══ -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title">Finding Detail</span>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Dynamic content -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Toast Container ═══ -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ═══ JavaScript ═══ -->
+  <script>
+    // ─── State ──────────────────────────────────────────────────────────────
+    let currentPage = 'dashboard';
+    let currentSeverityFilter = 'all';
+    let findingsPage = 1;
+    let socket = null;
+    let autoRefreshInterval = null;
+
+    // ─── Socket.IO Connection ───────────────────────────────────────────────
+    function initSocket() {
+      try {
+        socket = io();
+
+        socket.on('connect', () => {
+          console.log('[Socket] Connected');
+          updateStatus('online', 'Online');
+        });
+
+        socket.on('disconnect', () => {
+          console.log('[Socket] Disconnected');
+          updateStatus('offline', 'Disconnected');
+        });
+
+        socket.on('state', (state) => {
+          updateDaemonState(state);
+        });
+
+        socket.on('findingsUpdated', (data) => {
+          showToast('New findings detected!', 'high');
+          refreshStats();
+          if (currentPage === 'dashboard') loadRecentFindings();
+          if (currentPage === 'findings') loadAllFindings();
+        });
+
+        socket.on('scanStarted', (data) => {
+          showToast(`${data.type} scan started`, 'success');
+          refreshStats();
+        });
+
+        socket.on('targetAdded', () => {
+          if (currentPage === 'targets') loadTargets();
+        });
+
+        socket.on('targetRemoved', () => {
+          if (currentPage === 'targets') loadTargets();
+        });
+
+      } catch (e) {
+        console.error('[Socket] Init failed:', e);
+        updateStatus('offline', 'No Connection');
+      }
+    }
+
+    // ─── Navigation ─────────────────────────────────────────────────────────
+    function navigateTo(page) {
+      currentPage = page;
+
+      // Update nav
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+      });
+
+      // Update pages
+      document.querySelectorAll('.page').forEach(p => {
+        p.classList.toggle('active', p.id === `page-${page}`);
+      });
+
+      // Load page data
+      switch (page) {
+        case 'dashboard': refreshStats(); loadRecentFindings(); break;
+        case 'targets': loadTargets(); break;
+        case 'findings': loadAllFindings(); break;
+        case 'scans': loadScanHistory(); break;
+        case 'proxy': loadProxyStatus(); break;
+        case 'settings': loadSettings(); break;
+      }
+    }
+
+    // ─── Status Updates ─────────────────────────────────────────────────────
+    function updateStatus(status, text) {
+      const indicator = document.getElementById('statusIndicator');
+      const dot = document.getElementById('statusDot');
+      const textEl = document.getElementById('statusText');
+
+      indicator.className = `status-indicator ${status}`;
+      dot.className = `status-dot ${status}`;
+      textEl.textContent = text;
+    }
+
+    function updateDaemonState(state) {
+      if (state.status === 'scanning') {
+        updateStatus('scanning', 'Scanning...');
+      } else if (state.status === 'running' || state.status === 'idle') {
+        updateStatus('online', 'Online');
+      } else {
+        updateStatus('offline', state.status || 'Unknown');
+      }
+
+      // Update uptime
+      if (state.uptime) {
+        const hours = Math.floor(state.uptime / 3600);
+        const mins = Math.floor((state.uptime % 3600) / 60);
+        document.getElementById('uptime-display').textContent = `Uptime: ${hours}h ${mins}m`;
+      }
+
+      // Update scan progress
+      if (state.currentScan) {
+        document.getElementById('scan-progress-title').textContent = `${state.currentScan.type} in progress...`;
+        document.getElementById('scan-progress-status').textContent = `${state.currentScan.targets || 0} targets`;
+        const bar = document.getElementById('scan-progress-bar');
+        bar.style.width = `${state.currentScan.progress || 50}%`;
+        bar.classList.add('scanning');
+      } else {
+        document.getElementById('scan-progress-title').textContent = 'No Active Scan';
+        document.getElementById('scan-progress-status').textContent = state.lastScan ? `Last: ${timeAgo(state.lastScan.completedAt)}` : 'Idle';
+        const bar = document.getElementById('scan-progress-bar');
+        bar.style.width = '0%';
+        bar.classList.remove('scanning');
+      }
+    }
+
+    // ─── API Calls ──────────────────────────────────────────────────────────
+    async function apiGet(endpoint) {
+      try {
+        const res = await fetch(endpoint);
+        return await res.json();
+      } catch (e) {
+        console.error(`API GET ${endpoint} failed:`, e);
+        return null;
+      }
+    }
+
+    async function apiPost(endpoint, data = {}) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return await res.json();
+      } catch (e) {
+        console.error(`API POST ${endpoint} failed:`, e);
+        return null;
+      }
+    }
+
+    async function apiDelete(endpoint) {
+      try {
+        const res = await fetch(endpoint, { method: 'DELETE' });
+        return await res.json();
+      } catch (e) {
+        console.error(`API DELETE ${endpoint} failed:`, e);
+        return null;
+      }
+    }
+
+    // ─── Dashboard ──────────────────────────────────────────────────────────
+    async function refreshStats() {
+      const stats = await apiGet('/api/stats');
+      if (!stats) return;
+
+      document.getElementById('stat-scans').textContent = stats.totalScans || 0;
+      document.getElementById('stat-findings').textContent = stats.totalFindings || 0;
+      document.getElementById('stat-critical').textContent = stats.severity?.critical || 0;
+      document.getElementById('stat-high').textContent = stats.severity?.high || 0;
+      document.getElementById('stat-medium').textContent = stats.severity?.medium || 0;
+      document.getElementById('stat-low').textContent = stats.severity?.low || 0;
+
+      // Update chart
+      generateChart();
+    }
+
+    async function loadRecentFindings() {
+      const data = await apiGet('/api/findings?limit=10');
+      if (!data || !data.findings) return;
+
+      const tbody = document.getElementById('recent-findings-body');
+      if (data.findings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><div class="empty-state-text">No findings yet</div><div class="empty-state-sub">Start a scan to discover vulnerabilities</div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.findings.map(f => `
+        <tr onclick="showFindingDetail('${f.id}')">
+          <td><span class="badge badge-${f.severity}">${f.severity}</span></td>
+          <td>${escapeHtml(f.type || 'Unknown')}</td>
+          <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(f.url || 'N/A')}</td>
+          <td>${escapeHtml(f.parameter || '-')}</td>
+          <td>${timeAgo(f.timestamp)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function generateChart() {
+      const chartArea = document.getElementById('chart-area');
+      // Generate 30 random bars for visualization
+      let bars = '';
+      for (let i = 0; i < 30; i++) {
+        const height = Math.random() * 80 + 10;
+        bars += `<div class="chart-bar" style="height: ${height}%" title="Day ${i + 1}"></div>`;
+      }
+      chartArea.innerHTML = bars;
+    }
+
+    // ─── Targets ────────────────────────────────────────────────────────────
+    async function loadTargets() {
+      const data = await apiGet('/api/targets');
+      if (!data) return;
+
+      const grid = document.getElementById('targets-grid');
+      const targets = data.targets || [];
+
+      if (targets.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">&#x1F3AF;</div><div class="empty-state-text">No targets configured</div><div class="empty-state-sub">Add a target URL above to get started</div></div>`;
+        return;
+      }
+
+      grid.innerHTML = targets.map(t => `
+        <div class="target-card">
+          <div class="target-url">${escapeHtml(t.url || t)}</div>
+          <div class="target-meta">
+            ${t.name ? `Name: ${escapeHtml(t.name)} | ` : ''}
+            Added: ${t.addedAt ? timeAgo(t.addedAt) : 'Unknown'}
+            ${t.findingsCount ? ` | Findings: ${t.findingsCount}` : ''}
+          </div>
+          <div class="target-actions">
+            <button class="btn btn-secondary btn-sm" onclick="startScanForTarget('${escapeHtml(t.url || t)}')">&#x1F50D; Scan</button>
+            <button class="btn btn-danger btn-sm" onclick="removeTarget('${t.id}')">&#x1F5D1; Remove</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function addTarget() {
+      const url = document.getElementById('new-target-url').value.trim();
+      const name = document.getElementById('new-target-name').value.trim();
+
+      if (!url) {
+        showToast('Please enter a target URL', 'high');
+        return;
+      }
+
+      const result = await apiPost('/api/targets', { url, name });
+      if (result && !result.error) {
+        showToast('Target added successfully', 'success');
+        document.getElementById('new-target-url').value = '';
+        document.getElementById('new-target-name').value = '';
+        loadTargets();
+      } else {
+        showToast(result?.error || 'Failed to add target', 'critical');
+      }
+    }
+
+    async function removeTarget(id) {
+      if (!confirm('Remove this target?')) return;
+      const result = await apiDelete(`/api/targets/${id}`);
+      if (result && !result.error) {
+        showToast('Target removed', 'success');
+        loadTargets();
+      }
+    }
+
+    async function startScanForTarget(url) {
+      await startScan('quickScan', [url]);
+    }
+
+    // ─── Findings ───────────────────────────────────────────────────────────
+    async function loadAllFindings() {
+      const search = document.getElementById('findings-search')?.value || '';
+      const severity = currentSeverityFilter === 'all' ? '' : currentSeverityFilter;
+      const params = new URLSearchParams({ page: findingsPage, limit: 25 });
+      if (severity) params.set('severity', severity);
+      if (search) params.set('search', search);
+
+      const data = await apiGet(`/api/findings?${params}`);
+      if (!data) return;
+
+      const tbody = document.getElementById('all-findings-body');
+      if (!data.findings || data.findings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-text">No findings match your filters</div></td></tr>`;
+        document.getElementById('findings-pagination').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = data.findings.map(f => `
+        <tr onclick="showFindingDetail('${f.id}')">
+          <td><span class="badge badge-${f.severity}">${f.severity}</span></td>
+          <td>${escapeHtml(f.type || 'Unknown')}</td>
+          <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(f.url || 'N/A')}</td>
+          <td>${escapeHtml(f.parameter || '-')}</td>
+          <td><span class="scan-type-badge">${f.scanType || '-'}</span></td>
+          <td>${timeAgo(f.timestamp)}</td>
+        </tr>
+      `).join('');
+
+      // Pagination
+      renderPagination(data.pagination);
+    }
+
+    function renderPagination(pagination) {
+      if (!pagination || pagination.pages <= 1) {
+        document.getElementById('findings-pagination').innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      html += `<button class="pagination-btn" ${pagination.page <= 1 ? 'disabled' : ''} onclick="goToPage(${pagination.page - 1})">&#x25C0; Prev</button>`;
+
+      for (let i = 1; i <= Math.min(pagination.pages, 10); i++) {
+        html += `<button class="pagination-btn ${i === pagination.page ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+      }
+
+      html += `<button class="pagination-btn" ${pagination.page >= pagination.pages ? 'disabled' : ''} onclick="goToPage(${pagination.page + 1})">Next &#x25B6;</button>`;
+
+      document.getElementById('findings-pagination').innerHTML = html;
+    }
+
+    function goToPage(page) {
+      findingsPage = page;
+      loadAllFindings();
+    }
+
+    function setSeverityFilter(severity, el) {
+      currentSeverityFilter = severity;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      findingsPage = 1;
+      loadAllFindings();
+    }
+
+    function filterFindings() {
+      clearTimeout(window._filterTimeout);
+      window._filterTimeout = setTimeout(() => {
+        findingsPage = 1;
+        loadAllFindings();
+      }, 300);
+    }
+
+    async function showFindingDetail(id) {
+      const finding = await apiGet(`/api/findings/${id}`);
+      if (!finding || finding.error) {
+        showToast('Finding not found', 'high');
+        return;
+      }
+
+      document.getElementById('modal-title').textContent = `${finding.severity?.toUpperCase()} - ${finding.type}`;
+      document.getElementById('modal-body').innerHTML = `
+        <div class="finding-detail-grid">
+          <div class="finding-field">
+            <div class="finding-field-label">Severity</div>
+            <div class="finding-field-value"><span class="badge badge-${finding.severity}">${finding.severity}</span></div>
+          </div>
+          <div class="finding-field">
+            <div class="finding-field-label">Type</div>
+            <div class="finding-field-value">${escapeHtml(finding.type || 'Unknown')}</div>
+          </div>
+          <div class="finding-field">
+            <div class="finding-field-label">URL</div>
+            <div class="finding-field-value">${escapeHtml(finding.url || 'N/A')}</div>
+          </div>
+          <div class="finding-field">
+            <div class="finding-field-label">Parameter</div>
+            <div class="finding-field-value">${escapeHtml(finding.parameter || 'N/A')}</div>
+          </div>
+          <div class="finding-field">
+            <div class="finding-field-label">Scan Type</div>
+            <div class="finding-field-value">${escapeHtml(finding.scanType || 'N/A')}</div>
+          </div>
+          <div class="finding-field">
+            <div class="finding-field-label">Timestamp</div>
+            <div class="finding-field-value">${finding.timestamp || 'N/A'}</div>
+          </div>
+        </div>
+        ${finding.description ? `<div style="margin-bottom: 16px;"><strong>Description:</strong><p style="margin-top: 8px; color: var(--text-secondary);">${escapeHtml(finding.description)}</p></div>` : ''}
+        ${finding.poc ? `<div><strong>Proof of Concept:</strong><div class="poc-block">${escapeHtml(finding.poc)}</div></div>` : ''}
+      `;
+
+      document.getElementById('modal-overlay').classList.add('active');
+    }
+
+    function closeModal(event) {
+      if (event && event.target !== document.getElementById('modal-overlay')) return;
+      document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    // ─── Scans ──────────────────────────────────────────────────────────────
+    async function loadScanHistory() {
+      const data = await apiGet('/api/scans/history');
+      if (!data) return;
+
+      const container = document.getElementById('scan-history-list');
+      const history = data.history || [];
+
+      if (history.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">&#x1F504;</div><div class="empty-state-text">No scan history</div></div>`;
+        return;
+      }
+
+      container.innerHTML = history.map(scan => `
+        <div class="scan-history-item">
+          <span class="scan-type-badge">${scan.type || 'unknown'}</span>
+          <span style="flex: 1; font-size: 13px;">${scan.findings || 0} findings</span>
+          <span style="font-size: 12px; color: var(--text-muted);">${scan.duration ? (scan.duration / 1000).toFixed(1) + 's' : '-'}</span>
+          <span style="font-size: 12px; color: var(--text-muted);">${timeAgo(scan.completedAt)}</span>
+        </div>
+      `).join('');
+    }
+
+    async function startScan(type, targets = []) {
+      const result = await apiPost('/api/scan/start', { type, targets });
+      if (result && !result.error) {
+        showToast(`${type} scan started`, 'success');
+        refreshStats();
+      } else {
+        showToast(result?.error || 'Failed to start scan', 'critical');
+      }
+    }
+
+    function startQuickScan() {
+      startScan('quickScan');
+    }
+
+    // ─── Proxy ──────────────────────────────────────────────────────────────
+    async function loadProxyStatus() {
+      const data = await apiGet('/api/proxy/status');
+      if (!data) return;
+
+      document.getElementById('proxy-stats').textContent = `Total: ${data.total} | Active: ${data.active} | Last Refresh: ${data.lastRefreshed ? timeAgo(data.lastRefreshed) : 'Never'}`;
+
+      const grid = document.getElementById('proxy-grid');
+      if (!data.proxies || data.proxies.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">&#x1F310;</div><div class="empty-state-text">No proxies loaded</div><div class="empty-state-sub">Click refresh to load proxy pool</div></div>`;
+        return;
+      }
+
+      grid.innerHTML = data.proxies.map(p => `
+        <div class="proxy-item ${p.active ? 'active' : 'inactive'}">
+          ${p.host || p}:${p.port || ''} ${p.active ? '&#x2705;' : '&#x274C;'}
+        </div>
+      `).join('');
+    }
+
+    async function refreshProxies() {
+      const result = await apiPost('/api/proxy/refresh');
+      if (result) {
+        showToast('Proxy refresh triggered', 'success');
+        setTimeout(loadProxyStatus, 2000);
+      }
+    }
+
+    // ─── Settings ───────────────────────────────────────────────────────────
+    async function loadSettings() {
+      const config = await apiGet('/api/config');
+      if (!config) return;
+
+      // Update toggles
+      if (config.options) {
+        setToggle('toggle-proxy', config.options.proxy);
+        setToggle('toggle-deep', config.options.deep);
+        setToggle('toggle-safe', config.options.safe);
+      }
+
+      // Update schedule
+      if (config.schedule) {
+        document.getElementById('setting-schedule-full').value = config.schedule.fullScan || '';
+        document.getElementById('setting-schedule-quick').value = config.schedule.quickScan || '';
+        document.getElementById('setting-schedule-dork').value = config.schedule.dorkScan || '';
+        document.getElementById('setting-schedule-cve').value = config.schedule.cveScan || '';
+      }
+    }
+
+    function setToggle(id, value) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.toggle('active', !!value);
+      }
+    }
+
+    function toggleSetting(key, el) {
+      el.classList.toggle('active');
+    }
+
+    async function saveSettings() {
+      const config = {
+        options: {
+          proxy: document.getElementById('toggle-proxy').classList.contains('active'),
+          deep: document.getElementById('toggle-deep').classList.contains('active'),
+          safe: document.getElementById('toggle-safe').classList.contains('active'),
+          notifications: {
+            telegram: {
+              enabled: !!document.getElementById('setting-telegram-token').value,
+              botToken: document.getElementById('setting-telegram-token').value,
+              chatId: document.getElementById('setting-telegram-chat').value
+            },
+            discord: {
+              enabled: !!document.getElementById('setting-discord-webhook').value,
+              webhookUrl: document.getElementById('setting-discord-webhook').value
+            },
+            onSeverity: ['critical', 'high']
+          }
+        }
+      };
+
+      const result = await apiPost('/api/config', config);
+      if (result && !result.error) {
+        showToast('Settings saved', 'success');
+      } else {
+        showToast('Failed to save settings', 'critical');
+      }
+    }
+
+    async function saveSchedule() {
+      const config = {
+        schedule: {
+          fullScan: document.getElementById('setting-schedule-full').value,
+          quickScan: document.getElementById('setting-schedule-quick').value,
+          dorkScan: document.getElementById('setting-schedule-dork').value,
+          cveScan: document.getElementById('setting-schedule-cve').value
+        }
+      };
+
+      const result = await apiPost('/api/config', config);
+      if (result && !result.error) {
+        showToast('Schedule updated', 'success');
+      } else {
+        showToast('Failed to update schedule', 'critical');
+      }
+    }
+
+    // ─── Utilities ──────────────────────────────────────────────────────────
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function timeAgo(dateStr) {
+      if (!dateStr) return 'N/A';
+      const now = new Date();
+      const date = new Date(dateStr);
+      const seconds = Math.floor((now - date) / 1000);
+
+      if (seconds < 60) return `${seconds}s ago`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+      return `${Math.floor(seconds / 86400)}d ago`;
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        toast.style.transition = 'all 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // ─── Keyboard Shortcuts ─────────────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('findings-search')?.focus();
+      }
+    });
+
+    // ─── Initialization ─────────────────────────────────────────────────────
+    function init() {
+      initSocket();
+      refreshStats();
+      loadRecentFindings();
+      generateChart();
+
+      // Auto-refresh every 30 seconds
+      autoRefreshInterval = setInterval(() => {
+        refreshStats();
+        if (currentPage === 'dashboard') loadRecentFindings();
+      }, 30000);
+    }
+
+    // Start
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+
+</body>
+</html>

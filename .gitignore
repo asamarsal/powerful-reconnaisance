@@ -1,0 +1,99 @@
+# ═══════════════════════════════════════════════════
+# NODE.JS
+# ═══════════════════════════════════════════════════
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ═══════════════════════════════════════════════════
+# PYTHON
+# ═══════════════════════════════════════════════════
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+ENV/
+.python-version
+pip-log.txt
+
+# ═══════════════════════════════════════════════════
+# ENVIRONMENT & SECRETS
+# ═══════════════════════════════════════════════════
+.env
+.env.local
+.env.production
+.env.*.local
+*.key
+*.pem
+*.crt
+credentials.json
+secrets.json
+api_keys.json
+
+# ═══════════════════════════════════════════════════
+# OUTPUT & DATA (generated at runtime)
+# ═══════════════════════════════════════════════════
+output/
+data/
+logs/
+*.log
+
+# ═══════════════════════════════════════════════════
+# OS FILES
+# ═══════════════════════════════════════════════════
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# ═══════════════════════════════════════════════════
+# IDE / EDITOR
+# ═══════════════════════════════════════════════════
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+*.code-workspace
+
+# ═══════════════════════════════════════════════════
+# PUPPETEER / CHROME
+# ═══════════════════════════════════════════════════
+.local-chromium/
+chrome-data/
+
+# ═══════════════════════════════════════════════════
+# SCAN ARTIFACTS (sensitive - don't commit)
+# ═══════════════════════════════════════════════════
+targets.txt
+targets/
+scan-results-*.json
+poc-*.md
+dork-*.json
+hunt-*.json
+ai-report-*.md
+findings-db.json
+daemon-state.json
+daemon.log
+proxies.json
+
+# ═══════════════════════════════════════════════════
+# KEEP THESE DIRECTORIES (but ignore contents)
+# ═══════════════════════════════════════════════════
+!output/.gitkeep
+!data/.gitkeep
+!logs/.gitkeep
